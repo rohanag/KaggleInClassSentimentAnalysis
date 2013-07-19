@@ -1,0 +1,66 @@
+Rohan Agrawal, ra2616
+
+kaggleID:      Ockham
+kaggleProfile: http://www.kaggle.com/users/65733/ockham
+Language Used: Python
+Training File: ra2616Train.py
+Testing File : ra2616Test.py
+
+Preprocessing
+=============
+Function, tokenizer(): in ra2616Train.py
+
+I first stripped the sentences of dots, commas and inverted commas. Then I tokenized each sentence of the training data based on my regular expression.
+
+Then I perform stemming using Porter stemmer implementation provided by NLTK library. I had experimented with Lemmatization but had seen a decrease in the performance of the classifier. Removing the stemming step provides a small drop in perormance for the classifier, hence I choose to include the stemmer and not the lemmatizer.
+
+Without stemming=> Training Error 0.118024, Cross Validation Error 0.24304
+With stemming=>    Training Error 0.116929, Cross Validation Error 0.23972
+
+Feature Selection
+=================
+Functions, getNMIparams(), getNMI(): in ra2616Train.py
+
+I performed feature Selection based on Mutual Information, as there were no apparent advantages of chi^2 over Mutual Information or vice versa. But I did use chi^2 for identifying the top Bigrams.
+
+After getting the MI(Mutual Information) for all features (words) in the training set, I used the 2500 features with the highest Mutual Information. Using too many features resulted in very high cross validation error, but low training error, thus hinting at overfitting. Using too few features resulted in low training and cross validation errors. Thus, the value of 2500 was obtained using cross validation and testing on kaggle. (The code for cross validation is still present in ra2616Train.py, it is commented out)
+
+Since the training data set was quite small, and many sentences in the testing data would have words not present in the training data, it was also useful to include positive and negative sentiment words from other studies carried out in sentiment analysis. I experimented with 2 external datasets. The first was a list provided by Minqing Hu and Bing Liu at http://www.cs.uic.edu/~liub/FBS/sentiment-analysis.html
+The second was the AFINN-111 wordlist by Finn Ãrup Nielsen. The first list provided much better cross validation error, hence it was preffered to the latter. 
+
+UIC Wordlist=> Training Error 0.1302, Testing Accuracy 0.76638
+AFFIN wordlist=> Training Error 0.1224, Testing Accuracy 0.76479
+Both experiments had contant settings other than the wordlists.
+
+I also added 200 Bigrams with the highest chi^2 values. This also improved classifier performance.
+
+No Bigrams=>  Training Error 0.1294, Testing Accuracy 0.77203
+100 Bigrams=> Training Error 0.1282, Testing Accuracy 0.76431
+200 Bigrams=> Training Error 0.1268, Testing Accuracy 0.77393 
+300 Bigrams=> Training Error 0.1247, Testing Accuracy 0.77300 
+All experiments had contant settings other than the number of bigrams.
+
+Looking at some bigrams, they contain a lot of names of entertainers, for e.g. "alfr hitchcock", which means that Mr. Alfred Hitchcock is himself a decider of sentiment in movies.
+
+Removing all the stopwords given in NLTK also decreased the performance of the classifier, hinting that some stopwords also contribute to sentiment, particularly stopwords like 'not'. Thus I removed only a few stopwords such as 'a', 'an', 'the'.
+
+Classifier Implementation
+=========================
+I implemented the Bernoulli Naive Bayes classifier. I had also experimented with the Multinomial Naive Bayes classifier but found that its performance was equal to Bernoulli Naive Bayes at best. I had also tried to implement sentiment analysis as a Clustering problem, solved through kMeans clustering with k = 2. The result was not favorable at all with accuracy of approximately 55%. 
+
+Implementation of the Bernoulli Naive Bayes classifier was quite straightforward. The probability of a feature being a positive feature is calculated as the the number of positive training examples in which the feature appears divided by the total number of positive training examples in the training set. Similarly the probability of negative features is calculated. Laplace smoothing is done, and log likelihoods are taken to ensure values of probabilities do not reach 0. Once the model has been formulated, given a testing example, its probability of being positive, negative is calculated based on the model, and it is accordongily classified.
+
+References:
+===========
+
+Steven Bird, Ewan Klein and Edward Loper. "Natural Language Processing"
+
+C.D. Manning, P. Raghavan and H. Schütze (2008). "Introduction to Information Retrieval". Cambridge University Press.
+
+Bo Pang, Lillian Lee, and Shivakumar Vaithyanathan. "Thumbs up? Sentiment classification using machine learning techniques", Proceedings of EMNLP, 2002.
+
+Minqing Hu, Bing Liu. "Mining and Summarizing Customer Reviews.", Proceedings of the ACM SIGKDD International Conference on Knowledge Discovery and Data Mining(KDD-2004), Aug 22-25, 2004, Seattle, Washington, USA.
+
+Finn Ãrup Nielsen, "A new ANEW: Evaluation of a word list for sentiment analysis in microblogs", http://arxiv.org/abs/1103.2903
+
+Bing Liu. "Sentiment Analysis and Opinion Mining"
